@@ -1,0 +1,30 @@
+
+pragma options '-O3 -n bpnn'
+
+import 'sys/ctime.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'neuralnetwork.adept'
+
+func main(in argc int, in argv **ubyte) int {
+	srand(time(null))
+	
+	network NeuralNetwork
+	blueprint NeuralBlueprint
+
+	printf('Creating Neural Blueprint...\n')
+	blueprint.create()
+	defer blueprint.free()
+	blueprint.addLayer(1)
+	blueprint.addLayer(4)
+	blueprint.addLayer(4)
+	blueprint.addLayer(1)
+
+	printf('Creating Neural Network...\n')
+	network.create(&blueprint)
+	defer network.free()
+
+
+
+	return 0
+}

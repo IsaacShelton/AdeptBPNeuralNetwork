@@ -1,2 +1,2 @@
 # AdeptBPNeuralNetwork
-A back propagation neural network written in Adept
+A backpropagation neural network written in Adept 2.0
