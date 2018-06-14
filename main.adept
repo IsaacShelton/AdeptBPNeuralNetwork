@@ -4,11 +4,12 @@ pragma options '-O3 -n bpnn'
 import 'sys/ctime.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
-import 'neuralnetwork.adept'
+import 'neuralnet.adept'
+import 'gym.adept'
 
 func main(in argc int, in argv **ubyte) int {
 	srand(time(null))
-	
+
 	network NeuralNetwork
 	blueprint NeuralBlueprint
 
@@ -24,7 +25,7 @@ func main(in argc int, in argv **ubyte) int {
 	network.create(&blueprint)
 	defer network.free()
 
-
-
+	printf('Training Neural Network...\n')
+	workout(&network)
 	return 0
 }
