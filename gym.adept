@@ -1,0 +1,41 @@
+
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'neuralnet.adept'
+
+func workout(network *NeuralNetwork) void {
+    i usize = 0; while i != 100000 {
+        train(network)
+        i += 1
+    }
+
+    inputs *double = malloc(sizeof double * 1)
+    targets *double = malloc(sizeof double * 1)
+    defer free(inputs)
+    defer free(targets)
+
+    d double = 0.0
+    if normalizedRandom() > 0.5, d = 1.0
+
+    inputs[0] = d
+    targets[0] = d
+
+    network.feedForward(inputs, 1)
+}
+
+func train(network *NeuralNetwork) void {
+    printf('training...\n')
+    inputs *double = malloc(sizeof double * 1)
+    targets *double = malloc(sizeof double * 1)
+    defer free(inputs)
+    defer free(targets)
+
+    d double = 0.0
+    if normalizedRandom() > 0.5, d = 1.0
+
+    inputs[0] = d
+    targets[0] = d
+
+    network.feedForward(inputs, 1)
+    network.backPropagate(targets, 1)
+}

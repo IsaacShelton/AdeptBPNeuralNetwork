@@ -1,0 +1,252 @@
+
+import 'sys/cmath.adept'
+import 'sys/cstdio.adept'
+import 'sys/cstdlib.adept'
+import 'sys/cstring.adept'
+
+struct Neuron (output double, connections *NeuralConnection,
+    length usize, gradient double)
+
+struct NeuralConnection (delta double, weight double)
+
+struct NeuralLayer (neurons *Neuron, length usize)
+
+struct NeuralNetwork (layers *NeuralLayer, length usize, error double,
+    recent_avg_error double, recent_avg_smoothing double)
+
+struct NeuralBlueprint (neuron_count *usize, length usize, capacity usize)
+
+// ------------------- normalizedRandom -------------------
+
+func normalizedRandom() double {
+    return cast double rand() / cast double RAND_MAX
+}
+
+// ------------------- transferFunction (and friends) -------------------
+
+func transferFunction(in sum double) double {
+    return tanh(sum)
+}
+
+func transferFunctionDerivative(in sum double) double {
+    return 1.0 - sum * sum
+}
+
+// ------------------- NeuralBlueprint -------------------
+
+func create(this *NeuralBlueprint) void {
+    this.neuron_count = malloc(sizeof *usize * 4)
+    this.length = 0; this.capacity = 4
+}
+
+func addLayer(this *NeuralBlueprint, count usize) void {
+    if this.length == this.capacity {
+        this.capacity *= 2
+        new_neuron_count *usize = malloc(sizeof *usize * this.capacity)
+        memcpy(new_neuron_count, this.neuron_count, sizeof *usize * this.length)
+        free(this.neuron_count)
+        this.neuron_count = new_neuron_count
+    }
+
+    this.neuron_count[this.length] = count
+    this.length += 1
+}
+
+func free(this *NeuralBlueprint) void {
+    free(this.neuron_count)
+}
+
+// ------------------- NeuralNetwork-------------------
+
+func create(this *NeuralNetwork, blueprint *NeuralBlueprint) void {
+    this.length = blueprint.length
+    this.layers = malloc(sizeof NeuralLayer * this.length)
+    this.error = 0.0
+    this.recent_avg_error = 0.0
+    this.recent_avg_smoothing = 0.0
+
+    i usize = 0; while i != this.length {
+        layerOutputCount usize = 0
+        if i != this.length, layerOutputCount = blueprint.neuron_count[i + 1]
+        this.layers[i].createTheLayer(blueprint.neuron_count[i] + 1, layerOutputCount); i += 1
+    }
+}
+
+func feedForward(this *NeuralNetwork, data *double, data_length usize) void {
+    input_layer *NeuralLayer = this.getInputLayer()
+
+    if data_length != input_layer.length - 1 {
+        printf('NeuralNetwork.freeForward() error: data length doesn\'t match input count')
+        return
+    }
+
+    i usize = 0; while i != data_length {
+        input_layer.neurons[i].output = data[i]; i += 1
+    }
+
+    layer_id usize = 1; while layer_id != this.length {
+        previous_layer *NeuralLayer = &this.layers[layer_id - 1]
+
+        neuron_id usize = 0; while neuron_id != this.layers[layer_id].length - 1 {
+            neuron *Neuron = &this.layers[layer_id].neurons[neuron_id]
+            sum double = 0.0
+
+            s usize = 0; while s != previous_layer.length {
+                sum += previous_layer.neurons[s].output * previous_layer.neurons[s].connections[neuron_id].weight
+                s += 1
+            }
+
+            neuron.output = transferFunction(sum)
+            neuron_id += 1
+        }
+        layer_id += 1
+    }
+}
+
+func backPropagate(this *NeuralNetwork, targets *double, targets_length usize) void {
+    output_layer *NeuralLayer = this.getOutputLayer()
+
+    if targets_length != output_layer.length - 1 {
+        printf('NeuralNetwork.backPropagate() error: output layer length doesn\'t match target count')
+        return
+    }
+
+    // Root mean square error
+    i usize = 0; while i != output_layer.length - 1 {
+        delta double = targets[i] - output_layer.neurons[i].output
+        this.error += delta * delta
+        i += 1
+    }
+
+    this.error = sqrt(this.error / cast double (output_layer.length - 1))
+
+    // Calculate recent error score
+    this.recent_avg_error = (this.recent_avg_error * this.recent_avg_smoothing + this.error) /
+        (this.recent_avg_smoothing + 1.0)
+
+    // Calculate output layer gradients
+    j usize = 0; while j != output_layer.length {
+        out_neuron *Neuron = &output_layer.neurons[j]
+        out_neuron.gradient = (targets[j] - out_neuron.output) * transferFunctionDerivative(out_neuron.output)
+        j += 1
+    }
+
+    // Calculate gradients on hidden layers
+    k usize = this.length - 2; while k > 0 {
+        hidden_layer *NeuralLayer = &this.layers[k]
+        next_layer *NeuralLayer = &this.layers[k + 1]
+        k -= 1
+
+        m usize = 0; while m != hidden_layer.length {
+            hidden_neuron *Neuron = &hidden_layer.neurons[m]
+
+            hidden_neuron.gradient = hidden_neuron.sumDerivativesOfWeights(next_layer) *
+                transferFunctionDerivative(hidden_neuron.output)
+
+            m += 1
+        }
+    }
+
+
+    // Update weights
+    eta double = 0.15; alpha double = 0.5
+
+    l usize = this.length - 1; while l != 0 {
+        layer *NeuralLayer = &this.layers[l]
+        previous_layer *NeuralLayer = &this.layers[l - 1]
+
+        n usize = 0; while n != layer.length {
+            old_neuron *Neuron = &layer.neurons[n]
+
+            w usize = 0; while w != old_neuron.length {
+                printf('Layer: %d Neuron: %d Weight: %d\n', l, n, w)
+                previous_layer_neuron *Neuron = &previous_layer.neurons[w]
+                puts('a')
+                old_delta double = previous_layer_neuron.connections[n].delta
+                puts('b')
+                new_delta double = eta * previous_layer_neuron.output * old_neuron.gradient + alpha * old_delta
+                puts('c')
+
+                previous_layer_neuron.connections[n].delta = new_delta
+                puts('d')
+                previous_layer_neuron.connections[n].weight += new_delta
+                puts('e')
+                w += 1
+            }
+
+            n += 1
+        }
+
+        l -= 1
+    }
+}
+
+func getInputLayer(this *NeuralNetwork) *NeuralLayer {
+    if this.length == 0 or this.layers == null, return null
+    return this.layers
+}
+
+func getOutputLayer(this *NeuralNetwork) *NeuralLayer {
+    if this.length == 0 or this.layers == null, return null
+    return &this.layers[this.length - 1]
+}
+
+func free(this *NeuralNetwork) void {
+    i usize = 0; while i != this.length, this.layers[i].free(); i += 1
+    free(this.layers)
+}
+
+// ------------------- NeuralLayer-------------------
+
+func createTheLayer(this *NeuralLayer, neuron_count usize, output_count usize) void {
+    this.length = neuron_count
+    this.neurons = malloc(sizeof Neuron * this.length)
+
+    i usize = 0; while i != this.length {
+        this.neurons[i].create(output_count); i += 1
+    }
+
+    this.neurons[this.length - 1].output = 1.0
+}
+
+func free(this *NeuralLayer) void {
+    i usize = 0; while i != this.length, this.neurons[i].free(); i += 1
+    free(this.neurons)
+}
+
+// ------------------- NeuralConnection-------------------
+
+func create(this *NeuralConnection, delta double, weight double) void {
+    this.delta = delta; this.weight = weight
+}
+
+func create(this *NeuralConnection) void {
+    this.delta = 0.0
+    this.weight = normalizedRandom()
+}
+
+// ------------------- Neuron-------------------
+
+func create(this *Neuron, outputCount usize) void {
+    this.length = outputCount
+    this.connections = malloc(sizeof NeuralConnection * outputCount)
+
+    i usize = 0; while i != outputCount {
+        this.connections[i].create(); i += 1
+    }
+}
+
+func sumDerivativesOfWeights(this *Neuron, in next_layer *NeuralLayer) double {
+    sum double = 0.0
+
+    i usize = 0; while i != next_layer.length {
+        sum += this.connections.weight * next_layer.neurons[i].gradient
+        i += 1
+    }
+
+    return sum
+}
+
+func free(this *Neuron) void {
+    free(this.connections)
+}
