@@ -67,7 +67,7 @@ func create(this *NeuralNetwork, blueprint *NeuralBlueprint) void {
 
     i usize = 0; while i != this.length {
         layerOutputCount usize = 0
-        if i != this.length, layerOutputCount = blueprint.neuron_count[i + 1]
+        if i != this.length - 1, layerOutputCount = blueprint.neuron_count[i + 1]
         this.layers[i].createTheLayer(blueprint.neuron_count[i] + 1, layerOutputCount); i += 1
     }
 }
