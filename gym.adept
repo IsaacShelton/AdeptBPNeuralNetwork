@@ -3,39 +3,102 @@ import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
 import 'neuralnet.adept'
 
-func workout(network *NeuralNetwork) void {
-    i usize = 0; while i != 100000 {
-        train(network)
-        i += 1
+GYM_VERBOSE == false
+
+GYM_EXERCISE_MIRROR == 0x01
+GYM_EXERCISE_XOR == 0x02
+GYM_EXERCISE_OR == 0x03
+
+func workout(network *NeuralNetwork, exercise uint) void {
+    i usize; inputs *double
+    printf('Training Neural Network...\n')
+
+    if exercise == GYM_EXERCISE_MIRROR {
+        inputs = malloc(sizeof double * 1); defer free(inputs)
+        i = 0; while i != 100000, train_mirror(network, inputs); i += 1
+        printf('Completed Training...\n')
+
+        // Test when given 1.0
+        inputs[0] = 1.0; network.feedForward(inputs, 1)
+        printf('%f ===> %f\n', inputs[0], network.getOutputLayer().neurons[0].output)
+
+        // Test when given 0.0
+        inputs[0] = 0.0; network.feedForward(inputs, 1)
+        printf('%f ===> %f\n', inputs[0], network.getOutputLayer().neurons[0].output)
+        return
     }
 
-    inputs *double = malloc(sizeof double * 1)
-    targets *double = malloc(sizeof double * 1)
-    defer free(inputs)
-    defer free(targets)
+    if exercise == GYM_EXERCISE_XOR {
+        inputs = malloc(sizeof double * 2); defer free(inputs)
+        i = 0; while i != 100000, train_xor(network, inputs); i += 1
+        printf('Completed Training...\n')
 
-    d double = 0.0
-    if normalizedRandom() > 0.5, d = 1.0
+        // Test when given 0.0 and 0.0
+        inputs[0] = 0.0; inputs[1] = 0.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
 
-    inputs[0] = d
-    targets[0] = d
+        // Test when given 0.0 and 1.0
+        inputs[0] = 0.0; inputs[1] = 1.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
 
-    network.feedForward(inputs, 1)
+        // Test when given 1.0 and 0.0
+        inputs[0] = 1.0; inputs[1] = 0.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
+
+        // Test when given 1.0 and 1.0
+        inputs[0] = 1.0; inputs[1] = 1.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
+        return
+    }
+
+    if exercise == GYM_EXERCISE_OR {
+        inputs = malloc(sizeof double * 2); defer free(inputs)
+        i = 0; while i != 100000, train_or(network, inputs); i += 1
+        printf('Completed Training...\n')
+
+        // Test when given 0.0 and 0.0
+        inputs[0] = 0.0; inputs[1] = 0.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
+
+        // Test when given 0.0 and 1.0
+        inputs[0] = 0.0; inputs[1] = 1.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
+
+        // Test when given 1.0 and 0.0
+        inputs[0] = 1.0; inputs[1] = 0.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
+
+        // Test when given 1.0 and 1.0
+        inputs[0] = 1.0; inputs[1] = 1.0; network.feedForward(inputs, 2)
+        printf('%f %f ===> %f\n', inputs[0], inputs[1], network.getOutputLayer().neurons[0].output)
+        return
+    }
 }
 
-func train(network *NeuralNetwork) void {
-    printf('training...\n')
-    inputs *double = malloc(sizeof double * 1)
-    targets *double = malloc(sizeof double * 1)
-    defer free(inputs)
-    defer free(targets)
-
-    d double = 0.0
-    if normalizedRandom() > 0.5, d = 1.0
-
-    inputs[0] = d
-    targets[0] = d
+func train_mirror(network *NeuralNetwork, inputs *double) void {
+    inputs[0] = cast double (normalizedRandom() > 0.5)
+    target double = inputs[0]
 
     network.feedForward(inputs, 1)
-    network.backPropagate(targets, 1)
+    network.backPropagate(&target, 1)
+}
+
+func train_xor(network *NeuralNetwork, inputs *double) void {
+    inputs[0] = cast double (normalizedRandom() > 0.5)
+    inputs[1] = cast double (normalizedRandom() > 0.5)
+
+    target double = cast double (inputs[0] != inputs[1])
+
+    network.feedForward(inputs, 2)
+    network.backPropagate(&target, 1)
+}
+
+func train_or(network *NeuralNetwork, inputs *double) void {
+    inputs[0] = cast double (normalizedRandom() > 0.5)
+    inputs[1] = cast double (normalizedRandom() > 0.5)
+
+    target double = cast double (cast bool inputs[0] || cast bool inputs[1])
+
+    network.feedForward(inputs, 2)
+    network.backPropagate(&target, 1)
 }

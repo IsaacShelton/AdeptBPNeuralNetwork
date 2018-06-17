@@ -1,6 +1,9 @@
 
 pragma options '-O3 -n bpnn'
 
+//pragma project_name bpnn
+//pragma optimization aggressive
+
 import 'sys/ctime.adept'
 import 'sys/cstdio.adept'
 import 'sys/cstdlib.adept'
@@ -16,7 +19,7 @@ func main(in argc int, in argv **ubyte) int {
 	printf('Creating Neural Blueprint...\n')
 	blueprint.create()
 	defer blueprint.free()
-	blueprint.addLayer(1)
+	blueprint.addLayer(2)
 	blueprint.addLayer(4)
 	blueprint.addLayer(4)
 	blueprint.addLayer(1)
@@ -25,7 +28,8 @@ func main(in argc int, in argv **ubyte) int {
 	network.create(&blueprint)
 	defer network.free()
 
-	printf('Training Neural Network...\n')
-	workout(&network)
+	// You can experiment with different exercises here
+	// (Remember to change the neural blueprint if necessary)
+	workout(&network, GYM_EXERCISE_XOR)
 	return 0
 }

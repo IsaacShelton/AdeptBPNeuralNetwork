@@ -68,7 +68,7 @@ func create(this *NeuralNetwork, blueprint *NeuralBlueprint) void {
     i usize = 0; while i != this.length {
         layerOutputCount usize = 0
         if i != this.length - 1, layerOutputCount = blueprint.neuron_count[i + 1]
-        this.layers[i].createTheLayer(blueprint.neuron_count[i] + 1, layerOutputCount); i += 1
+        this.layers[i].create(blueprint.neuron_count[i] + 1, layerOutputCount); i += 1
     }
 }
 
@@ -125,17 +125,16 @@ func backPropagate(this *NeuralNetwork, targets *double, targets_length usize) v
         (this.recent_avg_smoothing + 1.0)
 
     // Calculate output layer gradients
-    j usize = 0; while j != output_layer.length {
+    j usize = 0; while j != output_layer.length - 1 {
         out_neuron *Neuron = &output_layer.neurons[j]
         out_neuron.gradient = (targets[j] - out_neuron.output) * transferFunctionDerivative(out_neuron.output)
         j += 1
     }
 
     // Calculate gradients on hidden layers
-    k usize = this.length - 2; while k > 0 {
+    k usize = this.length - 2; while k != 0 {
         hidden_layer *NeuralLayer = &this.layers[k]
         next_layer *NeuralLayer = &this.layers[k + 1]
-        k -= 1
 
         m usize = 0; while m != hidden_layer.length {
             hidden_neuron *Neuron = &hidden_layer.neurons[m]
@@ -145,8 +144,9 @@ func backPropagate(this *NeuralNetwork, targets *double, targets_length usize) v
 
             m += 1
         }
-    }
 
+        k -= 1
+    }
 
     // Update weights
     eta double = 0.15; alpha double = 0.5
@@ -155,22 +155,16 @@ func backPropagate(this *NeuralNetwork, targets *double, targets_length usize) v
         layer *NeuralLayer = &this.layers[l]
         previous_layer *NeuralLayer = &this.layers[l - 1]
 
-        n usize = 0; while n != layer.length {
-            old_neuron *Neuron = &layer.neurons[n]
+        n usize = 0; while n != layer.length - 1{
+            current_neuron *Neuron = &layer.neurons[n]
 
-            w usize = 0; while w != old_neuron.length {
-                printf('Layer: %d Neuron: %d Weight: %d\n', l, n, w)
+            w usize = 0; while w != previous_layer.length {
                 previous_layer_neuron *Neuron = &previous_layer.neurons[w]
-                puts('a')
                 old_delta double = previous_layer_neuron.connections[n].delta
-                puts('b')
-                new_delta double = eta * previous_layer_neuron.output * old_neuron.gradient + alpha * old_delta
-                puts('c')
+                new_delta double = eta * previous_layer_neuron.output * current_neuron.gradient + alpha * old_delta
 
                 previous_layer_neuron.connections[n].delta = new_delta
-                puts('d')
                 previous_layer_neuron.connections[n].weight += new_delta
-                puts('e')
                 w += 1
             }
 
@@ -191,6 +185,27 @@ func getOutputLayer(this *NeuralNetwork) *NeuralLayer {
     return &this.layers[this.length - 1]
 }
 
+func dump(this *NeuralNetwork) void {
+    i usize = 0; while i != this.length {
+        printf('layer %d:\n', i)
+
+        j usize = 0; while j != this.layers[i].length {
+            printf('    neuron: %d (%d connections)[o=%f] ', j, this.layers[i].neurons[j].length, this.layers[i].neurons[j].output)
+            if j + 1 == this.layers[i].length, printf(' (bias)')
+            printf('\n')
+
+            k usize = 0; while k != this.layers[i].neurons[j].length {
+                printf('        [d=%f, w=%f]\n', this.layers[i].neurons[j].connections[k].delta, this.layers[i].neurons[j].connections[k].weight)
+                k += 1
+            }
+
+            j += 1
+        }
+
+        i += 1
+    }
+}
+
 func free(this *NeuralNetwork) void {
     i usize = 0; while i != this.length, this.layers[i].free(); i += 1
     free(this.layers)
@@ -198,7 +213,7 @@ func free(this *NeuralNetwork) void {
 
 // ------------------- NeuralLayer-------------------
 
-func createTheLayer(this *NeuralLayer, neuron_count usize, output_count usize) void {
+func create(this *NeuralLayer, neuron_count usize, output_count usize) void {
     this.length = neuron_count
     this.neurons = malloc(sizeof Neuron * this.length)
 
