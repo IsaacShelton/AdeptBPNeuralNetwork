@@ -39,7 +39,7 @@ func create(this *NeuralBlueprint) void {
     this.length = 0; this.capacity = 4
 }
 
-func addLayer(this *NeuralBlueprint, count usize) void {
+func addLayer(this *NeuralBlueprint, in count usize) void {
     if this.length == this.capacity {
         this.capacity *= 2
         new_neuron_count *usize = malloc(sizeof *usize * this.capacity)
@@ -58,7 +58,7 @@ func free(this *NeuralBlueprint) void {
 
 // ------------------- NeuralNetwork-------------------
 
-func create(this *NeuralNetwork, blueprint *NeuralBlueprint) void {
+func create(this *NeuralNetwork, in blueprint *NeuralBlueprint) void {
     this.length = blueprint.length
     this.layers = malloc(sizeof NeuralLayer * this.length)
     this.error = 0.0
@@ -72,7 +72,7 @@ func create(this *NeuralNetwork, blueprint *NeuralBlueprint) void {
     }
 }
 
-func feedForward(this *NeuralNetwork, data *double, data_length usize) void {
+func feedForward(this *NeuralNetwork, in data *double, in data_length usize) void {
     input_layer *NeuralLayer = this.getInputLayer()
 
     if data_length != input_layer.length - 1 {
@@ -103,7 +103,7 @@ func feedForward(this *NeuralNetwork, data *double, data_length usize) void {
     }
 }
 
-func backPropagate(this *NeuralNetwork, targets *double, targets_length usize) void {
+func backPropagate(this *NeuralNetwork, in targets *double, in targets_length usize) void {
     output_layer *NeuralLayer = this.getOutputLayer()
 
     if targets_length != output_layer.length - 1 {
@@ -186,6 +186,7 @@ func getOutputLayer(this *NeuralNetwork) *NeuralLayer {
 }
 
 func dump(this *NeuralNetwork) void {
+    // Pretty messy function to dump the nerual network
     i usize = 0; while i != this.length {
         printf('layer %d:\n', i)
 
@@ -213,7 +214,7 @@ func free(this *NeuralNetwork) void {
 
 // ------------------- NeuralLayer-------------------
 
-func create(this *NeuralLayer, neuron_count usize, output_count usize) void {
+func create(this *NeuralLayer, in neuron_count usize, in output_count usize) void {
     this.length = neuron_count
     this.neurons = malloc(sizeof Neuron * this.length)
 
@@ -231,7 +232,7 @@ func free(this *NeuralLayer) void {
 
 // ------------------- NeuralConnection-------------------
 
-func create(this *NeuralConnection, delta double, weight double) void {
+func create(this *NeuralConnection, in delta double, in weight double) void {
     this.delta = delta; this.weight = weight
 }
 
@@ -242,11 +243,11 @@ func create(this *NeuralConnection) void {
 
 // ------------------- Neuron-------------------
 
-func create(this *Neuron, outputCount usize) void {
-    this.length = outputCount
-    this.connections = malloc(sizeof NeuralConnection * outputCount)
+func create(this *Neuron, in output_count usize) void {
+    this.length = output_count
+    this.connections = malloc(sizeof NeuralConnection * output_count)
 
-    i usize = 0; while i != outputCount {
+    i usize = 0; while i != output_count {
         this.connections[i].create(); i += 1
     }
 }
