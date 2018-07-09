@@ -1,5 +1,6 @@
 
-pragma project_name 'bpnn'
+pragma compiler_version '2.0'
+pragma project_name 'AdeptNeuralNetwork'
 pragma optimization aggressive
 
 import 'sys/ctime.adept'
