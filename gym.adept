@@ -15,7 +15,7 @@ func workout(network *NeuralNetwork, exercise uint) void {
 
     if exercise == GYM_EXERCISE_MIRROR {
         inputs = malloc(sizeof double * 1); defer free(inputs)
-        i = 0; while i != 100000, train_mirror(network, inputs); i += 1
+        i = 0; while i != 100000, trainMirror(network, inputs); i += 1
         printf('Completed Training...\n')
 
         // Test when given 1.0
@@ -30,7 +30,7 @@ func workout(network *NeuralNetwork, exercise uint) void {
 
     if exercise == GYM_EXERCISE_XOR {
         inputs = malloc(sizeof double * 2); defer free(inputs)
-        i = 0; while i != 100000, train_xor(network, inputs); i += 1
+        i = 0; while i != 100000, trainXOR(network, inputs); i += 1
         printf('Completed Training...\n')
 
         // Test when given 0.0 and 0.0
@@ -53,7 +53,7 @@ func workout(network *NeuralNetwork, exercise uint) void {
 
     if exercise == GYM_EXERCISE_OR {
         inputs = malloc(sizeof double * 2); defer free(inputs)
-        i = 0; while i != 100000, train_or(network, inputs); i += 1
+        i = 0; while i != 100000, trainOR(network, inputs); i += 1
         printf('Completed Training...\n')
 
         // Test when given 0.0 and 0.0
@@ -75,7 +75,7 @@ func workout(network *NeuralNetwork, exercise uint) void {
     }
 }
 
-func train_mirror(network *NeuralNetwork, inputs *double) void {
+func trainMirror(network *NeuralNetwork, inputs *double) void {
     inputs[0] = cast double (normalizedRandom() > 0.5)
     target double = inputs[0]
 
@@ -83,7 +83,7 @@ func train_mirror(network *NeuralNetwork, inputs *double) void {
     network.backPropagate(&target, 1)
 }
 
-func train_xor(network *NeuralNetwork, inputs *double) void {
+func trainXOR(network *NeuralNetwork, inputs *double) void {
     inputs[0] = cast double (normalizedRandom() > 0.5)
     inputs[1] = cast double (normalizedRandom() > 0.5)
 
@@ -93,7 +93,7 @@ func train_xor(network *NeuralNetwork, inputs *double) void {
     network.backPropagate(&target, 1)
 }
 
-func train_or(network *NeuralNetwork, inputs *double) void {
+func trainOR(network *NeuralNetwork, inputs *double) void {
     inputs[0] = cast double (normalizedRandom() > 0.5)
     inputs[1] = cast double (normalizedRandom() > 0.5)
 
